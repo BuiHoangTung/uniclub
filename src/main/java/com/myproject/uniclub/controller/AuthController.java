@@ -5,6 +5,7 @@ import com.myproject.uniclub.response.BaseResponse;
 import com.myproject.uniclub.service.AuthenService;
 import com.myproject.uniclub.utils.JwtHelper;
 import io.jsonwebtoken.io.Encoders;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,10 +13,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import tools.jackson.databind.ObjectMapper;
 
 import javax.crypto.SecretKey;
@@ -23,6 +21,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/authen")
+@CrossOrigin
 public class AuthController {
 
     @Autowired
@@ -37,7 +36,7 @@ public class AuthController {
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @PostMapping
-    public ResponseEntity<?> authen(@RequestBody AuthenRequest authenRequest) {
+    public ResponseEntity<?> authen(@Valid @RequestBody AuthenRequest authenRequest) {
 //        // Tạo key:
 //        SecretKey secretKey = Jwts.SIG.HS256.key().build();
 //
