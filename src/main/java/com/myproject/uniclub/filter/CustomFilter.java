@@ -57,12 +57,15 @@ public class CustomFilter extends OncePerRequestFilter {
 
                 // Cách 2:
                 List<AuthorityDTO> authorityDTOS = this.objectMapper.readValue(data, new TypeReference<List<AuthorityDTO>>() {});
-                List<GrantedAuthority> authorities = new ArrayList<>();
+//                List<GrantedAuthority> authorities = new ArrayList<>();
+//
+//                authorityDTOS.forEach(a -> {
+//                    SimpleGrantedAuthority simpleGrantedAuthority = new SimpleGrantedAuthority(a.getAuthority());
+//                    authorities.add(simpleGrantedAuthority);
+//                });
 
-                authorityDTOS.forEach(a -> {
-                    SimpleGrantedAuthority simpleGrantedAuthority = new SimpleGrantedAuthority(a.getAuthority());
-                    authorities.add(simpleGrantedAuthority);
-                });
+                List<SimpleGrantedAuthority> authorities = authorityDTOS.stream()
+                        .map(item -> new SimpleGrantedAuthority(item.getAuthority())).toList();
 
                 UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken =
                         new UsernamePasswordAuthenticationToken("", "", authorities);
