@@ -1,6 +1,7 @@
 package com.myproject.uniclub.security;
 
 import com.myproject.uniclub.dto.RoleDTO;
+import com.myproject.uniclub.exception.AuthenException;
 import com.myproject.uniclub.request.AuthenRequest;
 import com.myproject.uniclub.service.AuthenService;
 import org.jspecify.annotations.Nullable;
@@ -35,7 +36,7 @@ public class CustomAuthenProvider implements AuthenticationProvider {
 
             return new UsernamePasswordAuthenticationToken("", "", simpleGrantedAuthorities);
         } else {
-            return null;
+            throw new AuthenException("Đăng nhập thất bại");
         }
     }
 
