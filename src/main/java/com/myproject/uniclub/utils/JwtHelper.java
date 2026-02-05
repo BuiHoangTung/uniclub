@@ -17,7 +17,7 @@ public class JwtHelper {
     @Value("${jwts.key}")
     private String strKey;
 
-    private final int EXPIRATION_TIME = 24 * 60 * 60 * 1000;
+    private final int EXPIRATION_TIME = 5 * 60 * 1000;
 
     // Dùng LocalDateTime để thao tác với thời gian như: So sánh thời gian, ...
 
