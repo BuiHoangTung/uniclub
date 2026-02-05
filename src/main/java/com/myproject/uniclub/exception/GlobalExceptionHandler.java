@@ -1,6 +1,7 @@
 package com.myproject.uniclub.exception;
 
 import com.myproject.uniclub.response.BaseResponse;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -8,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({SaveFileException.class}) // {} thể hiện nhiều exception.
+    @ExceptionHandler({SaveFileException.class, ExpiredJwtException.class, RuntimeException.class}) // {} thể hiện nhiều exception.
     public ResponseEntity<?> handleException(Exception e) {
         BaseResponse response = new BaseResponse();
         response.setStatusCode(500);
