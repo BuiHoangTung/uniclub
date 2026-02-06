@@ -27,15 +27,26 @@ public class ProductController {
         return new ResponseEntity<>("Hello add product", HttpStatus.OK);
     }
 
-    @GetMapping
-    public ResponseEntity<?> getProduct() {
+    @GetMapping("/{page}")
+    public ResponseEntity<?> getProduct(@PathVariable int page) {
         BaseResponse response = new BaseResponse();
 
         response.setStatusCode(200);
         response.setMessage("Success.");
-        response.setData(this.productService.getProducts());
+        response.setData(this.productService.getProducts(page));
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/detail/{id}")
+    public ResponseEntity<?> getDetailProduct(@PathVariable int id) {
+        BaseResponse response = new BaseResponse();
+
+        response.setStatusCode(200);
+        response.setMessage("Success");
+        response.setData(this.productService.getDetailProduct(id));
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

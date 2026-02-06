@@ -36,4 +36,7 @@ public class ProductEntity {
     @Column(name = "create_date")
     private LocalDateTime createDate;
 
+    @OneToMany(mappedBy = "product")
+    private List<ProductCategoryEntity> productCategoryEntities;
+
 }
