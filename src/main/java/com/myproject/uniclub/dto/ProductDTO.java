@@ -11,6 +11,7 @@ public class ProductDTO {
     private String imageUrl;
     private double price;
     private String overview;
+    private List<ColorDTO> priceColorSize;
     private List<String> categories;
     private List<String> tags;
     private List<SizeDTO> sizes;

@@ -7,16 +7,23 @@ import com.myproject.uniclub.entity.*;
 import com.myproject.uniclub.repository.ProductRepository;
 import com.myproject.uniclub.repository.VariantRepository;
 import com.myproject.uniclub.request.AddProductRequest;
+import com.myproject.uniclub.service.ColorService;
 import com.myproject.uniclub.service.FileService;
 import com.myproject.uniclub.service.ProductService;
+import com.myproject.uniclub.service.SizeService;
 import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +40,14 @@ public class ProductServiceImp implements ProductService {
     @Autowired
     private FileService fileService;
 
+    @Autowired
+    private SizeService sizeService;
+
+    @Autowired
+    private ColorService colorService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
 
     @Transactional
     @Override
@@ -74,6 +89,7 @@ public class ProductServiceImp implements ProductService {
                 .map(item -> {
                     ProductDTO productDTO = new ProductDTO();
 
+                    productDTO.setId(item.getId());
                     productDTO.setName(item.getName());
                     productDTO.setPrice(item.getPrice());
                     // http://localhost:8080/file/ +
@@ -89,48 +105,92 @@ public class ProductServiceImp implements ProductService {
     }
 
     @Override
+//    @Cacheable("productDetail")
     public ProductDTO getDetailProduct(int id) {
-        Optional<ProductEntity> productEntityOptional = this.productRepository.findById(id);
+//        System.out.println("Check detail page");
+        ObjectMapper objectMapper = new ObjectMapper();
+        ProductDTO productDto = new ProductDTO();
+
+        if(redisTemplate.hasKey(String.valueOf(id))) {
+            String data = redisTemplate.opsForValue().get(String.valueOf(id)).toString();
+            productDto = objectMapper.readValue(data, ProductDTO.class);
+
+            System.out.println("Check has key");
+        } else {
+            System.out.println("Chek no key");
+
+            Optional<ProductEntity> productEntityOptional = this.productRepository.findById(id);
 //                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
 
-        return productEntityOptional.map(item -> {
-            ProductDTO productDTO = new ProductDTO();
+            productDto = productEntityOptional.map(item -> {
+                ProductDTO productDTO = new ProductDTO();
 
-            productDTO.setId(item.getId());
-            productDTO.setName(item.getName());
-            productDTO.setCategories(item.getProductCategoryEntities().stream().map(
-                    productCategory -> productCategory.getCategory().getName()
-            ).toList());
+                productDTO.setId(item.getId());
+                productDTO.setName(item.getName());
+                productDTO.setPrice(item.getPrice());
+                productDTO.setOverview(item.getDescription());
+                productDTO.setCategories(item.getProductCategoryEntities().stream().map(
+                        productCategory -> productCategory.getCategory().getName()
+                ).toList());
 
-            productDTO.setSizes(item.getVariantEntities().stream().map(variant -> {
-                SizeDTO sizeDTO = new SizeDTO();
+//            productDTO.setSizes(item.getVariantEntities().stream().map(variant -> {
+//                SizeDTO sizeDTO = new SizeDTO();
+//
+//                sizeDTO.setId(variant.getSize().getId());
+//                sizeDTO.setName(variant.getSize().getName());
+//
+//                return sizeDTO;
+//            }).toList());
 
-                sizeDTO.setId(variant.getSize().getId());
-                sizeDTO.setName(variant.getSize().getName());
-
-                return sizeDTO;
-            }).toList());
-
-            productDTO.setColors(item.getVariantEntities().stream().map(variant -> {
-                ColorDTO colorDTO = new ColorDTO();
-
-                colorDTO.setImages(variant.getImages());
-                colorDTO.setSizes(item.getVariantEntities().stream().map(variant1 -> {
+                productDTO.setSizes(this.sizeService.getAllSize().stream().map(size -> {
                     SizeDTO sizeDTO = new SizeDTO();
 
-                    sizeDTO.setId(variant1.getSize().getId());
-                    sizeDTO.setName((variant1.getSize().getName()));
-                    sizeDTO.setQuantity(variant1.getQuantity());
-                    sizeDTO.setPrice(variant1.getPrice());
+                    sizeDTO.setId(size.getId());
+                    sizeDTO.setName(size.getName());
 
                     return sizeDTO;
                 }).toList());
 
-                return colorDTO;
-            }).toList());
+                productDTO.setPriceColorSize(item.getVariantEntities().stream().map(variant -> {
+                    ColorDTO colorDTO = new ColorDTO();
 
-            return productDTO;
-        }).orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+                    colorDTO.setId(variant.getColor().getId());
+                    colorDTO.setImages(variant.getImages());
+                    colorDTO.setSizes(item.getVariantEntities().stream().map(variant1 -> {
+                        SizeDTO sizeDTO = new SizeDTO();
+
+                        sizeDTO.setId(variant1.getSize().getId());
+                        sizeDTO.setName((variant1.getSize().getName()));
+                        sizeDTO.setQuantity(variant1.getQuantity());
+                        sizeDTO.setPrice(variant.getPrice());
+
+                        return sizeDTO;
+                    }).toList());
+
+                    return colorDTO;
+                }).toList());
+
+                productDTO.setColors(this.colorService.getAllColors().stream().map((color) -> {
+                    ColorDTO colorDTO = new ColorDTO();
+
+                    colorDTO.setId(color.getId());
+                    colorDTO.setName(color.getName());
+
+                    return colorDTO;
+                }).toList());
+
+                return productDTO;
+            }).orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
+
+            try {
+                String jsonProduct = objectMapper.writeValueAsString(productDto);
+                redisTemplate.opsForValue().set(String.valueOf(id), jsonProduct);
+            } catch(JacksonException e) {
+                throw new RuntimeException("Lỗi parse json");
+            }
+        }
+
+        return productDto;
     }
 
 }

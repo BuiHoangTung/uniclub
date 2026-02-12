@@ -27,7 +27,7 @@ public class ProductController {
         return new ResponseEntity<>("Hello add product", HttpStatus.OK);
     }
 
-    @GetMapping("/{page}")
+    @GetMapping(value = "/{page}")
     public ResponseEntity<?> getProduct(@PathVariable int page) {
         BaseResponse response = new BaseResponse();
 
